@@ -4,6 +4,7 @@
 #include <complex>
 #include <thread>
 #include <functional>
+#include <chrono>
 #include <fstream>
 
 
@@ -92,7 +93,7 @@ void PixelIntegal(double pixelSize, double integralStep,double deltaAngle,
 }
 
 
-void Process(double pixelSize, double integralStep, int detectors, double deltaAngle,
+void Process(int pixels, double pixelSize, double integralStep, int detectors, double deltaAngle,
              int view, int detector,
              double* gridX, double* gridY,
              double* H,
@@ -100,13 +101,13 @@ void Process(double pixelSize, double integralStep, int detectors, double deltaA
                                 int, int, double, double,
                                 double&)> f)
 {
-    for(int x=0;x<128;x++)
+    for(int x=0;x<pixels;x++)
     {
-        for(int y=0;y<128;y++)
+        for(int y=0;y<pixels;y++)
         {
             f(pixelSize, integralStep, deltaAngle,
               view, detector, gridX[x], gridY[y],
-              H[y + x*128 + detector*128*128 + view*detectors*128*128]);
+              H[y + x*pixels + detector*pixels*pixels + view*detectors*pixels*pixels]);
         }
     }
 }
@@ -116,35 +117,37 @@ void Process(double pixelSize, double integralStep, int detectors, double deltaA
 int main()
 {
     int detectors = 32;
-    double pixelSize = 2.0/128.0;
+    int pixels = 128;
+    double pixelSize = 2.0/pixels;
     double integralStep = pixelSize/50.0;
     int views = 16;
     double deltaAngle = (double)M_PI/views;
 
-    double* gridX = new double[128];
-    double* gridY = new double[128];
+    double* gridX = new double[pixels];
+    double* gridY = new double[pixels];
 
-    for (int i=0;i<128;i++)
+    for (int i=0;i<pixels;i++)
     {
         gridX[i] = -1.0 + pixelSize*i;
         gridY[i] = -1.0 + pixelSize*i;
     }
 
-    double* H = new double[views*detectors*128*128];
+    double* H = new double[views*detectors*pixels*pixels];
 
-    for(int i=0;i<views*detectors*128*128;i++)
+    for(int i=0;i<views*detectors*pixels*pixels;i++)
     {
         H[i] = 0;
     }
 
 
+    auto start = std::chrono::steady_clock::now();
     for(int a=0;a<views;a++)
     {
         std::thread t[detectors];
         for(int l=0;l<detectors;l++)
         {
             t[l] = std::thread(Process,
-                               pixelSize, integralStep, detectors, deltaAngle,
+                               pixels, pixelSize, integralStep, detectors, deltaAngle,
                                a, l,
                                gridX, gridY,
                                H,
@@ -156,18 +159,22 @@ int main()
         }
         std::cout<<"a: "<<a<<std::endl;
     }
+    auto end = std::chrono::steady_clock::now();
+    auto diff = end - start;
+
+    std::cout<<std::chrono::duration<double, std::milli>(diff).count()<<"ms"<<std::endl;
 
 
-    float* temp = new float[128*128*detectors*views];
+    float* temp = new float[pixels*pixels*detectors*views];
 
-    for(int i=0;i<128*128*detectors*views; i++)
+    for(int i=0;i<pixels*pixels*detectors*views; i++)
     {
         temp[i] = H[i];
     }
 
     std::vector<int> dim =
     {
-        128*128, detectors*views
+        pixels*pixels, detectors*views
     };
     SaveAsGadgetronRaw("H.real", temp, dim);
 
