@@ -2,6 +2,8 @@
 #include <cmath>
 #include <vector>
 #include <complex>
+#include <thread>
+#include <functional>
 #include <fstream>
 
 
@@ -90,6 +92,26 @@ void PixelIntegal(double pixelSize, double integralStep,double deltaAngle,
 }
 
 
+void Process(double pixelSize, double integralStep, int detectors, double deltaAngle,
+             int view, int detector,
+             double* gridX, double* gridY,
+             double* H,
+             std::function<void(double, double, double,
+                                int, int, double, double,
+                                double&)> f)
+{
+    for(int x=0;x<128;x++)
+    {
+        for(int y=0;y<128;y++)
+        {
+            f(pixelSize, integralStep, deltaAngle,
+              view, detector, gridX[x], gridY[y],
+              H[y + x*128 + detector*128*128 + view*detectors*128*128]);
+        }
+    }
+}
+
+
 
 int main()
 {
@@ -118,18 +140,19 @@ int main()
 
     for(int a=0;a<views;a++)
     {
+        std::thread t[detectors];
         for(int l=0;l<detectors;l++)
         {
-            for(int x=0;x<128;x++)
-            {
-                for(int y=0;y<128;y++)
-                {
-                    PixelIntegal(pixelSize, integralStep, deltaAngle,
-                                 a, l, gridX[x], gridY[y],
-                                 H[y + x*128 + l*128*128 + a*detectors*128*128]);
-                }
-            }
-            std::cout<<"l: "<<l<<std::endl;
+            t[l] = std::thread(Process,
+                               pixelSize, integralStep, detectors, deltaAngle,
+                               a, l,
+                               gridX, gridY,
+                               H,
+                               PixelIntegal);
+        }
+        for(int l=0;l<detectors;l++)
+        {
+            t[l].join();
         }
         std::cout<<"a: "<<a<<std::endl;
     }

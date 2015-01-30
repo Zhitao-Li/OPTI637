@@ -6,5 +6,7 @@ set(CMAKE_CXX_FLAGS "-std=c++0x")
 
 set(Source src/main.cpp)
 
-add_executable(ForewardModel ${Source})
+add_executable(ForwardModel ${Source})
+
+target_link_libraries(ForwardModel -lpthread)
 
