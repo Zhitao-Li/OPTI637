@@ -93,6 +93,32 @@ void PixelIntegal(double pixelSize, double integralStep,double deltaAngle,
 }
 
 
+void DeltaIntegal(double pixelSize, double integralStep,double deltaAngle,
+                  int view, int detector, double gridX, double gridY,
+                  double& H)
+{
+    double upperLeftX = gridX, upperLeftY = gridY;
+    double upperRightX = gridX + pixelSize, upperRightY = gridY;
+    double lowerLeftX = gridX, lowerLeftY = gridY + pixelSize;
+    double lowerRightX = gridX + pixelSize, lowerRightY = gridY + pixelSize;
+
+    double func1 = DetectorRect(upperLeftX, upperLeftY, deltaAngle*view, detector) *
+                   CircleFunc(upperLeftX, upperLeftY);
+
+    double func2 = DetectorRect(upperRightX, upperRightY, deltaAngle*view, detector) *
+                   CircleFunc(upperRightX, upperRightY);
+
+    double func3 = DetectorRect(lowerLeftX, lowerLeftY, deltaAngle*view, detector) *
+                   CircleFunc(lowerLeftX, lowerLeftY);
+
+    double func4 = DetectorRect(lowerRightX, lowerRightY, deltaAngle*view, detector) *
+                   CircleFunc(lowerRightX, lowerRightY);
+
+    if(func1 || func2 || func3 || func4)
+        H = integralStep*integralStep;
+}
+
+
 void Process(int pixels, double pixelSize, double integralStep, int detectors, double deltaAngle,
              int view, int detector,
              double* gridX, double* gridY,
@@ -152,6 +178,12 @@ int main()
                                gridX, gridY,
                                H,
                                PixelIntegal);
+//            t[l] = std::thread(Process,
+//                               pixels, pixelSize, integralStep, detectors, deltaAngle,
+//                               a, l,
+//                               gridX, gridY,
+//                               H,
+//                               DeltaIntegal);
         }
         for(int l=0;l<detectors;l++)
         {
@@ -176,7 +208,7 @@ int main()
     {
         pixels*pixels, detectors*views
     };
-    SaveAsGadgetronRaw("H.real", temp, dim);
+    SaveAsGadgetronRaw("H_pixel.real", temp, dim);
 
 
     delete [] gridX;
