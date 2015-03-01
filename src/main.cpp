@@ -8,7 +8,7 @@
 #include <fstream>
 
 
-int SaveAsGadgetronRaw(std::string filename, float *raw, std::vector<int> dim)
+template<class T> int SaveAsGadgetronRaw(std::string filename, T *raw, std::vector<int> dim)
 {
     std::fstream file;
 
@@ -26,7 +26,7 @@ int SaveAsGadgetronRaw(std::string filename, float *raw, std::vector<int> dim)
         sizeOfRaw *= d;
     }
 
-    file.write((char*) raw, sizeOfRaw*sizeof(float));
+    file.write((char*) raw, sizeOfRaw*sizeof(T));
 }
 
 
@@ -70,9 +70,33 @@ auto CircleFunc = [](double x, double y)
 };
 
 
+void FourierIntegal(double pixelSize, double integralStep,double deltaAngle,
+                    int view, int detector, double gridX, double gridY,
+                    std::complex<double>& H)
+{
+    std::complex<double> i1 = std::complex<double>(0, 1);
+    for(int i=0;i<std::floor(pixelSize/integralStep);i++)
+    {
+        for(int j=0;j<std::floor(pixelSize/integralStep);j++)
+        {
+            double point[2];
+            point[0] = gridX+(i+1)*integralStep;
+            point[1] = gridY+(j+1)*integralStep;
+
+            double func = DetectorRect(point[0], point[1], deltaAngle*view, detector) *
+                          PixelFunc(point[0], point[1], gridX, gridY, pixelSize) *
+                          CircleFunc(point[0], point[1]);
+
+            H += func*integralStep*integralStep*std::exp(-2.0*M_PI*i1*(point[0]*(detector-16)+point[1]*view)/2.0);
+        }
+    }
+    H /= 4.0;
+}
+
+
 void PixelIntegal(double pixelSize, double integralStep,double deltaAngle,
                   int view, int detector, double gridX, double gridY,
-                  double& H)
+                  std::complex<double>& H)
 {
     for(int i=0;i<std::floor(pixelSize/integralStep);i++)
     {
@@ -95,7 +119,7 @@ void PixelIntegal(double pixelSize, double integralStep,double deltaAngle,
 
 void DeltaIntegal(double pixelSize, double integralStep,double deltaAngle,
                   int view, int detector, double gridX, double gridY,
-                  double& H)
+                  std::complex<double>& H)
 {
     double upperLeftX = gridX, upperLeftY = gridY;
     double upperRightX = gridX + pixelSize, upperRightY = gridY;
@@ -115,17 +139,17 @@ void DeltaIntegal(double pixelSize, double integralStep,double deltaAngle,
                    CircleFunc(lowerRightX, lowerRightY);
 
     if(func1 || func2 || func3 || func4)
-        H = integralStep*integralStep;
+        H += 1.0;
 }
 
 
 void Process(int pixels, double pixelSize, double integralStep, int detectors, double deltaAngle,
              int view, int detector,
              double* gridX, double* gridY,
-             double* H,
+             std::complex<double>* H,
              std::function<void(double, double, double,
                                 int, int, double, double,
-                                double&)> f)
+                                std::complex<double>&)> f)
 {
     for(int x=0;x<pixels;x++)
     {
@@ -158,7 +182,7 @@ int main()
         gridY[i] = -1.0 + pixelSize*i;
     }
 
-    double* H = new double[views*detectors*pixels*pixels];
+    std::complex<double>* H = new std::complex<double>[views*detectors*pixels*pixels];
 
     for(int i=0;i<views*detectors*pixels*pixels;i++)
     {
@@ -172,18 +196,24 @@ int main()
         std::thread t[detectors];
         for(int l=0;l<detectors;l++)
         {
-            t[l] = std::thread(Process,
-                               pixels, pixelSize, integralStep, detectors, deltaAngle,
-                               a, l,
-                               gridX, gridY,
-                               H,
-                               PixelIntegal);
+//            t[l] = std::thread(Process,
+//                               pixels, pixelSize, integralStep, detectors, deltaAngle,
+//                               a, l,
+//                               gridX, gridY,
+//                               H,
+//                               PixelIntegal);
 //            t[l] = std::thread(Process,
 //                               pixels, pixelSize, integralStep, detectors, deltaAngle,
 //                               a, l,
 //                               gridX, gridY,
 //                               H,
 //                               DeltaIntegal);
+            t[l] = std::thread(Process,
+                               pixels, pixelSize, integralStep, detectors, deltaAngle,
+                               a, l,
+                               gridX, gridY,
+                               H,
+                               FourierIntegal);
         }
         for(int l=0;l<detectors;l++)
         {
@@ -197,7 +227,7 @@ int main()
     std::cout<<std::chrono::duration<double, std::milli>(diff).count()<<"ms"<<std::endl;
 
 
-    float* temp = new float[pixels*pixels*detectors*views];
+    std::complex<float>* temp = new std::complex<float>[pixels*pixels*detectors*views];
 
     for(int i=0;i<pixels*pixels*detectors*views; i++)
     {
@@ -206,9 +236,10 @@ int main()
 
     std::vector<int> dim =
     {
-        pixels*pixels, detectors*views
+        pixels*pixels,
+        detectors*views
     };
-    SaveAsGadgetronRaw("H_pixel.real", temp, dim);
+    SaveAsGadgetronRaw("H_fourier.cplx", temp, dim);
 
 
     delete [] gridX;
