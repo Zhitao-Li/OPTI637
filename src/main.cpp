@@ -141,11 +141,11 @@ int main(int argc, char** argv)
             detectors*views
         };
         if(Basis == 0)
-            SaveAsGadgetronRaw("H_Delta.cplx", temp, dim);
+            SaveAsGadgetronRaw("H_CT_Delta.cplx", temp, dim);
         else if(Basis == 1)
-            SaveAsGadgetronRaw("H_Pixel.cplx", temp, dim);
+            SaveAsGadgetronRaw("H_CT_Pixel.cplx", temp, dim);
         else if(Basis == 2)
-            SaveAsGadgetronRaw("H_fourier.cplx", temp, dim);
+            SaveAsGadgetronRaw("H_CT_Fourier.cplx", temp, dim);
     }
     else if(Modelity == 1)
     {
