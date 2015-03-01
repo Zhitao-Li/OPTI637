@@ -50,7 +50,10 @@ int main(int argc, char** argv)
         error = true;
 
     if(error)
+    {
         std::cout<<"ForwardModel -CT/-MR -Delta/-Pixel/-Fourier"<<std::endl;
+        return -1;
+    }
 
     int detectors = 32;
     int pixels = 128;
