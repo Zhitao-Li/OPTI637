@@ -87,5 +87,5 @@ void DeltaIntegal(double pixelSize, double integralStep,double deltaAngle,
                    CircleFunc(lowerRightX, lowerRightY, 1.0);
 
     if(func1 || func2 || func3 || func4)
-        H == 1.0;
+        H = 1.0;
 }

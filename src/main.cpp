@@ -3,6 +3,8 @@
 #include <functional>
 #include <chrono>
 
+#include <cstring>
+
 #include "CTFunc.h"
 
 
@@ -22,8 +24,34 @@ void Process(int pixels, double pixelSize, double integralStep, int detectors, d
 
 
 
-int main()
+int main(int argc, char** argv)
 {
+    bool error = false;
+    int Modelity = 0;
+    int Basis = 0;
+
+    if(argc < 3)
+        error = true;
+
+    if(strcmp(argv[1], "-CT") == 0)
+        Modelity = 0;
+    else if(strcmp(argv[1], "-MR") == 0)
+        Modelity = 1;
+    else
+        error = true;
+
+    if(strcmp(argv[2], "-Delta") == 0)
+        Basis = 0;
+    else if(strcmp(argv[2], "-Pixel") == 0)
+        Basis = 1;
+    else if(strcmp(argv[2], "-Fourier") == 0)
+        Basis = 2;
+    else
+        error = true;
+
+    if(error)
+        std::cout<<"ForwardModel -CT/-MR -Delta/-Pixel/-Fourier"<<std::endl;
+
     int detectors = 32;
     int pixels = 128;
     double pixelSize = 2.0/pixels;
@@ -54,24 +82,34 @@ int main()
         std::thread t[detectors];
         for(int l=0;l<detectors;l++)
         {
-//            t[l] = std::thread(Process,
-//                               pixels, pixelSize, integralStep, detectors, deltaAngle,
-//                               a, l,
-//                               gridX, gridY,
-//                               H,
-//                               PixelIntegal);
-//            t[l] = std::thread(Process,
-//                               pixels, pixelSize, integralStep, detectors, deltaAngle,
-//                               a, l,
-//                               gridX, gridY,
-//                               H,
-//                               DeltaIntegal);
-            t[l] = std::thread(Process,
-                               pixels, pixelSize, integralStep, detectors, deltaAngle,
-                               a, l,
-                               gridX, gridY,
-                               H,
-                               FourierIntegal);
+            if(Modelity == 0)
+            {
+                if(Basis == 1)
+                    t[l] = std::thread(Process,
+                                       pixels, pixelSize, integralStep, detectors, deltaAngle,
+                                       a, l,
+                                       gridX, gridY,
+                                       H,
+                                       PixelIntegal);
+                else if(Basis == 0)
+                    t[l] = std::thread(Process,
+                                       pixels, pixelSize, integralStep, detectors, deltaAngle,
+                                       a, l,
+                                       gridX, gridY,
+                                       H,
+                                       DeltaIntegal);
+                else if(Basis == 2)
+                    t[l] = std::thread(Process,
+                                       pixels, pixelSize, integralStep, detectors, deltaAngle,
+                                       a, l,
+                                       gridX, gridY,
+                                       H,
+                                       FourierIntegal);
+            }
+            else if(Modelity == 1)
+            {
+                std::cout<<"MR is not implemented yet."<<std::endl;
+            }
         }
         for(int l=0;l<detectors;l++)
         {
@@ -92,12 +130,24 @@ int main()
         temp[i] = H[i];
     }
 
-    std::vector<int> dim =
+    if(Modelity == 0)
     {
-        pixels*pixels,
-        detectors*views
-    };
-    SaveAsGadgetronRaw("H_fourier.cplx", temp, dim);
+        std::vector<int> dim =
+        {
+            pixels*pixels,
+            detectors*views
+        };
+        if(Basis == 0)
+            SaveAsGadgetronRaw("H_Delta.cplx", temp, dim);
+        else if(Basis == 1)
+            SaveAsGadgetronRaw("H_Pixel.cplx", temp, dim);
+        else if(Basis == 2)
+            SaveAsGadgetronRaw("H_fourier.cplx", temp, dim);
+    }
+    else if(Modelity == 1)
+    {
+        std::cout<<"MR is not implemented yet."<<std::endl;
+    }
 
 
     delete [] gridX;
