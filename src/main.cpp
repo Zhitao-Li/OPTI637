@@ -75,19 +75,20 @@ void FourierIntegal(double pixelSize, double integralStep,double deltaAngle,
                     std::complex<double>& H)
 {
     std::complex<double> i1 = std::complex<double>(0, 1);
-    for(int i=0;i<std::floor(pixelSize/integralStep);i++)
+    double step = 2.0/128.0;
+
+    for(int i=0;i<128;i++)
     {
-        for(int j=0;j<std::floor(pixelSize/integralStep);j++)
+        for(int j=0;j<128;j++)
         {
             double point[2];
-            point[0] = gridX+(i+1)*integralStep;
-            point[1] = gridY+(j+1)*integralStep;
+            point[0] = -1.0+i*step;
+            point[1] = -1.0+j*step;
 
-            double func = DetectorRect(point[0], point[1], deltaAngle*view, detector) *
-                          PixelFunc(point[0], point[1], gridX, gridY, pixelSize) *
-                          CircleFunc(point[0], point[1]);
+            double func = DetectorRect(gridX, gridY, deltaAngle*view, detector) *
+                          CircleFunc(gridX, gridY);
 
-            H += func*integralStep*integralStep*std::exp(-2.0*M_PI*i1*(point[0]*(detector-16)+point[1]*view)/2.0);
+            H += func*std::exp(-2.0*M_PI*i1*(point[0]*gridX+point[1]*gridY)/2.0);
         }
     }
     H /= 4.0;
