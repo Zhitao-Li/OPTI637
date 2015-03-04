@@ -1,3 +1,6 @@
+#ifndef BASICFUNC_H
+#define BASICFUNC_H
+
 #include <fstream>
 #include <cmath>
 #include <vector>
@@ -51,3 +54,6 @@ template<class T> int SaveAsGadgetronRaw(std::string filename, T *raw, std::vect
 
     file.write((char*) raw, sizeOfRaw*sizeof(T));
 }
+
+
+#endif // BASICFUNC_H

@@ -1,4 +1,3 @@
-#include <iostream>
 #include <thread>
 #include <functional>
 #include <chrono>
@@ -6,6 +5,7 @@
 #include <cstring>
 
 #include "CTFunc.h"
+#include "MRFunc.h"
 
 
 void Process(int pixels, double pixelSize, double integralStep, int detectors, double deltaAngle,
@@ -65,10 +65,22 @@ int main(int argc, char** argv)
     double* gridX = new double[pixels];
     double* gridY = new double[pixels];
 
-    for (int i=0;i<pixels;i++)
+    if(Modelity == 0)
     {
-        gridX[i] = -1.0 + pixelSize*i;
-        gridY[i] = -1.0 + pixelSize*i;
+        for (int i=0;i<pixels;i++)
+        {
+            gridX[i] = -1.0 + pixelSize*i;
+            gridY[i] = -1.0 + pixelSize*i;
+        }
+    }
+    else if(Modelity == 1)
+    {
+        pixelSize = 1.0/pixels;
+        for (int i=0;i<pixels;i++)
+        {
+            gridX[i] = -0.5 + pixelSize*i;
+            gridY[i] = -0.5 + pixelSize*i;
+        }
     }
 
     std::complex<double>* H = new std::complex<double>[views*detectors*pixels*pixels];
@@ -93,25 +105,46 @@ int main(int argc, char** argv)
                                        a, l,
                                        gridX, gridY,
                                        H,
-                                       PixelIntegal);
+                                       CTPixelIntegal);
                 else if(Basis == 0)
                     t[l] = std::thread(Process,
                                        pixels, pixelSize, integralStep, detectors, deltaAngle,
                                        a, l,
                                        gridX, gridY,
                                        H,
-                                       DeltaIntegal);
+                                       CTDeltaIntegal);
                 else if(Basis == 2)
                     t[l] = std::thread(Process,
                                        pixels, pixelSize, integralStep, detectors, deltaAngle,
                                        a, l,
                                        gridX, gridY,
                                        H,
-                                       FourierIntegal);
+                                       CTFourierIntegal);
             }
             else if(Modelity == 1)
             {
-                std::cout<<"MR is not implemented yet."<<std::endl;
+                if(Basis == 0)
+                    t[l] = std::thread(Process,
+                                       pixels, pixelSize, integralStep, detectors, deltaAngle,
+                                       a, l,
+                                       gridX, gridY,
+                                       H,
+                                       MRDeltaIntegal);
+                else if(Basis == 1)
+                    t[l] = std::thread(Process,
+                                       pixels, pixelSize, integralStep, detectors, deltaAngle,
+                                       a, l,
+                                       gridX, gridY,
+                                       H,
+                                       MRPixelIntegal);
+                else if(Basis == 2)
+                    t[l] = std::thread(Process,
+                                       pixels, pixelSize, integralStep, detectors, deltaAngle,
+                                       a, l,
+                                       gridX, gridY,
+                                       H,
+                                       MRFourierIntegal);
+
             }
         }
         for(int l=0;l<detectors;l++)
@@ -133,13 +166,13 @@ int main(int argc, char** argv)
         temp[i] = H[i];
     }
 
+    std::vector<int> dim =
+    {
+        pixels*pixels,
+        detectors*views
+    };
     if(Modelity == 0)
     {
-        std::vector<int> dim =
-        {
-            pixels*pixels,
-            detectors*views
-        };
         if(Basis == 0)
             SaveAsGadgetronRaw("H_CT_Delta.cplx", temp, dim);
         else if(Basis == 1)
@@ -149,7 +182,12 @@ int main(int argc, char** argv)
     }
     else if(Modelity == 1)
     {
-        std::cout<<"MR is not implemented yet."<<std::endl;
+        if(Basis == 0)
+            SaveAsGadgetronRaw("H_MR_Delta.cplx", temp, dim);
+        else if(Basis == 1)
+            SaveAsGadgetronRaw("H_MR_Pixel.cplx", temp, dim);
+        else if(Basis == 2)
+            SaveAsGadgetronRaw("H_MR_Fourier.cplx", temp, dim);
     }
 
 

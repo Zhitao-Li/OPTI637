@@ -1,6 +1,14 @@
+#ifndef CTFUNC_H
+#define CTFUNC_H
+
+
+#include <iostream>
 #include <complex>
 
 #include "basicFunc.h"
+
+
+using namespace std::literals::complex_literals;
 
 
 auto DetectorRect = [&](double x, double y, double theta, int l)
@@ -17,11 +25,10 @@ auto DetectorRect = [&](double x, double y, double theta, int l)
 };
 
 
-void FourierIntegal(double pixelSize, double integralStep,double deltaAngle,
-                    int view, int detector, double gridX, double gridY,
-                    std::complex<double>& H)
+void CTFourierIntegal(double pixelSize, double integralStep,double deltaAngle,
+                      int view, int detector, double gridX, double gridY,
+                      std::complex<double>& H)
 {
-    std::complex<double> i1 = std::complex<double>(0, 1);
     double step = 2.0/128.0;
 
     for(int i=0;i<128;i++)
@@ -35,16 +42,16 @@ void FourierIntegal(double pixelSize, double integralStep,double deltaAngle,
             double func = DetectorRect(gridX, gridY, deltaAngle*view, detector) *
                           CircleFunc(gridX, gridY, 1.0);
 
-            H += func*std::exp(-2.0*M_PI*i1*(point[0]*gridX+point[1]*gridY)/2.0);
+            H += func*std::exp(-2.0*M_PI*1i*(point[0]*gridX+point[1]*gridY)/2.0);
         }
     }
     H /= 4.0;
 }
 
 
-void PixelIntegal(double pixelSize, double integralStep,double deltaAngle,
-                  int view, int detector, double gridX, double gridY,
-                  std::complex<double>& H)
+void CTPixelIntegal(double pixelSize, double integralStep,double deltaAngle,
+                    int view, int detector, double gridX, double gridY,
+                    std::complex<double>& H)
 {
     for(int i=0;i<std::floor(pixelSize/integralStep);i++)
     {
@@ -65,9 +72,9 @@ void PixelIntegal(double pixelSize, double integralStep,double deltaAngle,
 }
 
 
-void DeltaIntegal(double pixelSize, double integralStep,double deltaAngle,
-                  int view, int detector, double gridX, double gridY,
-                  std::complex<double>& H)
+void CTDeltaIntegal(double pixelSize, double integralStep,double deltaAngle,
+                    int view, int detector, double gridX, double gridY,
+                    std::complex<double>& H)
 {
     double upperLeftX = gridX, upperLeftY = gridY;
     double upperRightX = gridX + pixelSize, upperRightY = gridY;
@@ -89,3 +96,6 @@ void DeltaIntegal(double pixelSize, double integralStep,double deltaAngle,
     if(func1 || func2 || func3 || func4)
         H = 1.0;
 }
+
+
+#endif // CTFUNC_H
