@@ -30,8 +30,7 @@ void MRFourierIntegal(double pixelSize, double integralStep,double deltaAngle,
             point[0] = -0.5+i*step;
             point[1] = -0.5+j*step;
 
-            double func = DetectorRect(gridX, gridY, deltaAngle*view, detector) *
-                          CircleFunc(gridX, gridY, 1.0);
+            double func = CircleFunc(gridX, gridY, 1.0);
 
             H += func*std::exp(-2.0*M_PI*1i*(point[0]*gridX+point[1]*gridY)/2.0)*
                       std::exp(-2.0*M_PI*1i*(gridX*px+gridY*py));
