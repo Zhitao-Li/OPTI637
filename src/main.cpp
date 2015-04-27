@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include <cstring>
+#include <algorithm>
 
 #include "CTFunc.h"
 #include "MRFunc.h"
@@ -23,31 +24,85 @@ void Process(int pixels, double pixelSize, double integralStep, int detectors, i
 }
 
 
+bool ArgumentHandler(int argc, char** argv, int& Modelity, int& Basis, int& detectors, int& views)
+{
+    std::vector<std::string> arguments =
+    {
+        "-CT", "-MR",
+        "-Delta", "-Pixel", "-Fourier",
+        "-Detectors", "-Views"
+    };
+
+    if(argc < 5)
+        return true;
+
+    for (int i=1;i<argc;i++)
+    {
+        std::string arg = std::string(argv[i]);
+        std::vector<std::string>::iterator itr = std::find(arguments.begin(), arguments.end(), arg);
+        if(itr != arguments.end())
+        {
+            if(itr-arguments.begin() == 0)
+                Modelity = 0;
+            else if(itr-arguments.begin() == 1)
+                Modelity = 1;
+
+            if(itr-arguments.begin() == 2)
+                Basis = 0;
+            else if(itr-arguments.begin() == 3)
+                Basis = 1;
+            else if(itr-arguments.begin() == 4)
+                Basis = 2;
+
+            if(itr-arguments.begin() == 5)
+            {
+                try
+                {
+                    detectors = std::stoi(argv[i+1]);
+                    i++;
+                }
+                catch (const std::invalid_argument& e)
+                {
+                    std::cout<<"Invalid value for number of detector! >> "<<e.what()<<std::endl;
+                    return true;
+                }
+            }
+
+            if(itr-arguments.begin() == 6)
+            {
+                try
+                {
+                    views = std::stoi(argv[i+1]);
+                    i++;
+                }
+                catch (const std::invalid_argument& e)
+                {
+                    std::cout<<"Invalid value for number of view! >> "<<e.what()<<std::endl;
+                    return true;
+                }
+            }
+        }
+        else
+        {
+            std::cerr<<"Unknown parameter: "<<arg<<std::endl;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
 
 int main(int argc, char** argv)
 {
     bool error = false;
     int Modelity = 0;
     int Basis = 0;
+    int detectors = 0;
+    int views = 0;
 
-    if(argc < 3)
-        error = true;
-
-    if(strcmp(argv[1], "-CT") == 0)
-        Modelity = 0;
-    else if(strcmp(argv[1], "-MR") == 0)
-        Modelity = 1;
-    else
-        error = true;
-
-    if(strcmp(argv[2], "-Delta") == 0)
-        Basis = 0;
-    else if(strcmp(argv[2], "-Pixel") == 0)
-        Basis = 1;
-    else if(strcmp(argv[2], "-Fourier") == 0)
-        Basis = 2;
-    else
-        error = true;
+    error = ArgumentHandler(argc, argv, Modelity, Basis, detectors, views);
 
     if(error)
     {
@@ -55,11 +110,9 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    int detectors = 32;
     int pixels = 128;
     double pixelSize = 2.0/pixels;
     double integralStep = pixelSize/50.0;
-    int views = 16;
     double deltaAngle = (double)M_PI/views;
 
     double* gridX = new double[pixels];
@@ -151,11 +204,12 @@ int main(int argc, char** argv)
         {
             t[l].join();
         }
-        std::cout<<"a: "<<a<<std::endl;
+        std::cout<<"Angle #: "<<a<<"/"<<views<<std::endl;
     }
     auto end = std::chrono::steady_clock::now();
     auto diff = end - start;
 
+    std::cout<<"Time spent generate H matrix: ";
     std::cout<<std::chrono::duration<double, std::milli>(diff).count()<<"ms"<<std::endl;
 
 
