@@ -13,12 +13,13 @@ using namespace std::literals::complex_literals;
 
 void MRFourierIntegal(double pixelSize, double integralStep,double deltaAngle,
                       int view, int detector, double gridX, double gridY,
+                      int detectors, int views,
                       std::complex<double>& H)
 {
     double vx = std::cos((double)deltaAngle*view);
     double vy = std::sin((double)deltaAngle*view);
-    double px = (detector - 15.0)*vx;
-    double py = (detector - 15.0)*vy;
+    double px = (double)(detector - detectors/2.0+1.0)*vx;
+    double py = (double)(detector - detectors/2.0+1.0)*vy;
 
     double step = 1.0/128.0;
 
@@ -42,12 +43,13 @@ void MRFourierIntegal(double pixelSize, double integralStep,double deltaAngle,
 
 void MRPixelIntegal(double pixelSize, double integralStep,double deltaAngle,
                     int view, int detector, double gridX, double gridY,
+                    int detectors, int views,
                     std::complex<double>& H)
 {
     double vx = std::cos((double)deltaAngle*view);
     double vy = std::sin((double)deltaAngle*view);
-    double px = (detector - 15.0)*vx;
-    double py = (detector - 15.0)*vy;
+    double px = (double)(detector - detectors/2.0+1.0)*vx;
+    double py = (double)(detector - detectors/2.0+1.0)*vy;
 
     for(int i=0;i<std::floor(pixelSize/integralStep);i++)
     {
@@ -69,12 +71,13 @@ void MRPixelIntegal(double pixelSize, double integralStep,double deltaAngle,
 
 void MRDeltaIntegal(double pixelSize, double integralStep,double deltaAngle,
                     int view, int detector, double gridX, double gridY,
+                    int detectors, int views,
                     std::complex<double>& H)
 {
     double vx = std::cos((double)deltaAngle*view);
     double vy = std::sin((double)deltaAngle*view);
-    double px = (detector - 15.0)*vx;
-    double py = (detector - 15.0)*vy;
+    double px = (double)(detector - detectors/2.0+1.0)*vx;
+    double py = (double)(detector - detectors/2.0+1.0)*vy;
 
     double upperLeftX = gridX, upperLeftY = gridY;
     double upperRightX = gridX + pixelSize, upperRightY = gridY;

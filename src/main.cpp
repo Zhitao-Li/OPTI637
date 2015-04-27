@@ -8,15 +8,15 @@
 #include "MRFunc.h"
 
 
-void Process(int pixels, double pixelSize, double integralStep, int detectors, double deltaAngle,
+void Process(int pixels, double pixelSize, double integralStep, int detectors, int views, double deltaAngle,
              int view, int detector, double* gridX, double* gridY, std::complex<double>* H,
-             std::function<void(double, double, double, int, int, double, double, std::complex<double>&)> f)
+             std::function<void(double, double, double, int, int, double, double, int, int, std::complex<double>&)> f)
 {
     for(int x=0;x<pixels;x++)
     {
         for(int y=0;y<pixels;y++)
         {
-            f(pixelSize, integralStep, deltaAngle, view, detector, gridX[x], gridY[y],
+            f(pixelSize, integralStep, deltaAngle, view, detector, gridX[x], gridY[y], detectors, views,
               H[y + x*pixels + detector*pixels*pixels + view*detectors*pixels*pixels]);
         }
     }
@@ -101,21 +101,21 @@ int main(int argc, char** argv)
             {
                 if(Basis == 1)
                     t[l] = std::thread(Process,
-                                       pixels, pixelSize, integralStep, detectors, deltaAngle,
+                                       pixels, pixelSize, integralStep, detectors, views, deltaAngle,
                                        a, l,
                                        gridX, gridY,
                                        H,
                                        CTPixelIntegal);
                 else if(Basis == 0)
                     t[l] = std::thread(Process,
-                                       pixels, pixelSize, integralStep, detectors, deltaAngle,
+                                       pixels, pixelSize, integralStep, detectors, views, deltaAngle,
                                        a, l,
                                        gridX, gridY,
                                        H,
                                        CTDeltaIntegal);
                 else if(Basis == 2)
                     t[l] = std::thread(Process,
-                                       pixels, pixelSize, integralStep, detectors, deltaAngle,
+                                       pixels, pixelSize, integralStep, detectors, views, deltaAngle,
                                        a, l,
                                        gridX, gridY,
                                        H,
@@ -125,21 +125,21 @@ int main(int argc, char** argv)
             {
                 if(Basis == 0)
                     t[l] = std::thread(Process,
-                                       pixels, pixelSize, integralStep, detectors, deltaAngle,
+                                       pixels, pixelSize, integralStep, detectors, views, deltaAngle,
                                        a, l,
                                        gridX, gridY,
                                        H,
                                        MRDeltaIntegal);
                 else if(Basis == 1)
                     t[l] = std::thread(Process,
-                                       pixels, pixelSize, integralStep, detectors, deltaAngle,
+                                       pixels, pixelSize, integralStep, detectors, views, deltaAngle,
                                        a, l,
                                        gridX, gridY,
                                        H,
                                        MRPixelIntegal);
                 else if(Basis == 2)
                     t[l] = std::thread(Process,
-                                       pixels, pixelSize, integralStep, detectors, deltaAngle,
+                                       pixels, pixelSize, integralStep, detectors, views, deltaAngle,
                                        a, l,
                                        gridX, gridY,
                                        H,
