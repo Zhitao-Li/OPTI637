@@ -204,7 +204,7 @@ int main(int argc, char** argv)
         {
             t[l].join();
         }
-        std::cout<<"Angle #: "<<a<<"/"<<views<<std::endl;
+        std::cout<<"Angle #: "<<a+1<<"/"<<views<<std::endl;
     }
     auto end = std::chrono::steady_clock::now();
     auto diff = end - start;
