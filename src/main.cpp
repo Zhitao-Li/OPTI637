@@ -106,7 +106,7 @@ int main(int argc, char** argv)
 
     if(error)
     {
-        std::cout<<"ForwardModel -CT/-MR -Delta/-Pixel/-Fourier"<<std::endl;
+        std::cout<<"ForwardModel -CT/-MR -Delta/-Pixel/-Fourier -Detectors # -Views #"<<std::endl;
         return -1;
     }
 
