@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <cmath>
+#include <complex>
 #include <vector>
 
 
@@ -53,6 +54,10 @@ template<class T> int SaveAsGadgetronRaw(std::string filename, T *raw, std::vect
     }
 
     file.write((char*) raw, sizeOfRaw*sizeof(T));
+    
+    file.close();
+    
+    return 0;
 }
 
 
